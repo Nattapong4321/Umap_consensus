@@ -73,6 +73,17 @@ for file in "$input_file"/split_OTU/*; do
       cat "$line" > "$input_file"/split_OTU/"$file_name"/draft/draft.fasta
     done < "$file_dir"
 
+  # Correct with Racon
+  success=1
+  minimap2 -d "$input_file"/split_OTU/"$file_name"/draft/draft.mmi "$input_file"/split_OTU/"$file_name"/draft/draft.fasta
+  minimap2 -a -x map-ont "$input_file"/split_OTU/"$file_name"/draft/draft.mmi "$input_file"/split_OTU/"$file_name"/correct/corrected_reads.correctedReads.fasta > "$input_file"/split_OTU/"$file_name"/draft/aligned.sam
+  if racon "$input_file"/split_OTU/"$file_name"/correct/corrected_reads.correctedReads.fasta "$input_file"/split_OTU/"$file_name"/draft/aligned.sam "$input_file"/split_OTU/"$file_name"/draft/draft.fasta > "$input_file"/split_OTU/"$file_name"/draft/racon_consensus.fasta ; then
+     success=1
+  else
+     success=0
+     cat "$input_file"/split_OTU/"$file_name"/draft/draft.fasta > "$input_file"/split_OTU/"$file_name"/draft/racon_consensus.fasta
+  fi
+
   # Medaka_consensus pipeline
-  medaka_consensus -i "$input_file"/split_OTU/"$file_name"/correct/corrected_reads.correctedReads.fasta -d "$input_file"/split_OTU/"$file_name"/draft/draft.fasta -o "$input_file"/split_OTU/"$file_name"/consensus -m r941_min_sup_g507
+  medaka_consensus -i "$input_file"/split_OTU/"$file_name"/correct/corrected_reads.correctedReads.fasta -d "$input_file"/split_OTU/"$file_name"/draft/racon_consensus.fasta -o "$input_file"/split_OTU/"$file_name"/consensus -m r941_min_sup_g507
 done 
